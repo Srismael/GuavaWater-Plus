@@ -6,8 +6,8 @@ const char* ssid = "TU_SSID";
 const char* password = "TU_PASSWORD";
 const char* apiUrl = "http://tu-api-url.com/get_times";  // Cambia esto por la URL de tu API
 
-const int relayPins[] = {26, 27};  // Pines del ESP32 conectados a los relés
-const int numRelays = 2;
+const int relayPins[] = {26};  // Pines del ESP32 conectados a los relés
+const int numRelays = 1;
 
 void setup() {
   Serial.begin(115200);
