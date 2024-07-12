@@ -2,53 +2,87 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "TU_SSID";
-const char* password = "TU_PASSWORD";
-const char* apiUrl = "http://tu-api-url.com/get_times";  // Cambia esto por la URL de tu API
+const char* ssid = "your_SSID";
+const char* password = "your_PASSWORD";
 
-const int relayPins[] = {26};  // Pines del ESP32 conectados a los relés
-const int numRelays = 1;
+// URL de la API
+const char* api_url = "http://api.example.com/valve";
+
+// Pin de la válvula
+const int valvePin = 26;
 
 void setup() {
   Serial.begin(115200);
+  
+  // Conectar a WiFi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.println("Conectando a WiFi...");
+    Serial.println("Connecting to WiFi...");
   }
-  Serial.println("Conectado a WiFi");
+  Serial.println("Connected to WiFi");
 
-  for (int i = 0; i < numRelays; i++) {
-    pinMode(relayPins[i], OUTPUT);
-    digitalWrite(relayPins[i], HIGH);  // Asegúrate de que los relés estén inicialmente apagados
-  }
+  // Configurar el pin de la válvula como salida
+  pinMode(valvePin, OUTPUT);
+
+  // Asegurarse de que la válvula esté cerrada al inicio
+  digitalWrite(valvePin, LOW);
 }
 
 void loop() {
+  // Verificar y activar la válvula según la API
+  checkAndActivateValve(api_url, valvePin);
+
+  // Esperar un tiempo antes de volver a comprobar
+  delay(10000);  // 10 segundos de espera entre comprobaciones
+}
+
+void checkAndActivateValve(const char* api_url, int valvePin) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(apiUrl);
-    int httpCode = http.GET();
+    http.begin(api_url);
+    int httpResponseCode = http.GET();
 
-    if (httpCode > 0) {
+    if (httpResponseCode == 200) {
       String payload = http.getString();
-      Serial.println(payload);
+      Serial.println("Received payload: " + payload);
 
-      // Parse the payload to get the times and control the relays
-      // Supongamos que el payload es un JSON como {"relay1": 1000, "relay2": 2000}
-      DynamicJsonDocument doc(512);
-      deserializeJson(doc, payload);
+      // Parsear el JSON recibido
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, payload);
 
-      for (int i = 0; i < numRelays; i++) {
-        int time = doc["relay" + String(i + 1)];
-        digitalWrite(relayPins[i], LOW);  // Abre la válvula
-        delay(time);
-        digitalWrite(relayPins[i], HIGH);  // Cierra la válvula
+      if (error) {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.c_str());
+        return;
       }
+
+      // Extraer los datos del JSON
+      const char* zone = doc["zone"];
+      int duration = doc["duration"];  // Duración en minutos
+
+      Serial.print("Zone: ");
+      Serial.println(zone);
+      Serial.print("Duration: ");
+      Serial.println(duration);
+
+      if (String(zone) == "zona 1" && duration > 0) {
+        Serial.print("Activating valve for ");
+        Serial.print(duration);
+        Serial.println(" minutes");
+
+        // Abrir la válvula
+        digitalWrite(valvePin, HIGH);
+        delay(duration * 60000);  // Convertir minutos a milisegundos
+        // Cerrar la válvula
+        digitalWrite(valvePin, LOW);
+      }
+    } else {
+      Serial.print("Error on HTTP request: ");
+      Serial.println(httpResponseCode);
     }
-
     http.end();
+  } else {
+    Serial.println("WiFi not connected");
   }
-
-  delay(60000);  // Espera un minuto antes de la siguiente consulta
 }

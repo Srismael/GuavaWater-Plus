@@ -2,25 +2,31 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+// Middleware para parsear JSON
 app.use(express.json());
 
-app.get('/get_times', (req, res) => {
-  // Aquí deberías obtener los tiempos de una base de datos o una lógica predefinida
-  const times = {
-    relay1: 1000,  // Tiempo en milisegundos
-    relay2: 2000
-  };
+// Datos simulados para la válvula
+let valveData = {
+  zone: "zona 1",
+  duration: 30 // Tiempo en minutos
+};
 
-  res.json(times);
+app.get('/valve', (req, res) => {
+  res.json(valveData);
 });
 
-app.post('/set_times', (req, res) => {
-  const times = req.body;
-  console.log('Received times:', times);
-  // Aquí deberías guardar los tiempos en una base de datos o una lógica predefinida
-  res.sendStatus(200);
+app.post('/valve', (req, res) => {
+  const { zone, duration } = req.body;
+  
+  if (zone && duration) {
+    valveData.zone = zone;
+    valveData.duration = duration;
+    res.status(200).send('Valve data updated');
+  } else {
+    res.status(400).send('Invalid data');
+  }
 });
 
 app.listen(port, () => {
-  console.log(`API escuchando en http://localhost:${port}`);
+  console.log('API server listening at http://localhost:${port}');
 });
