@@ -43,37 +43,46 @@ actor Valvulas {
     return valvula;
   };
 
-  public shared (msg) func abrirValvula(id: Text) : async Bool {
+ public shared (msg) func abrirValvula(id: Text, horaApertura: Text) : async Bool {
+    let valvula = listaValvulas.get(id);
+
+    switch (valvula) {
+        case (null) {
+            return false;
+        };
+        case (?valvulaActual) {
+            let nuevaValvula = {
+                estado = "abierta";
+                horaApertura = horaApertura;
+            };
+            listaValvulas.put(id, nuevaValvula);
+            Debug.print("Válvula abierta: " # id);
+            return true;
+        };
+    };
+};
+
+
+
+  public shared (msg) func cerrarValvula(id: Text, horaCierre: Text) : async Bool {
     let valvula: ?Valvula = listaValvulas.get(id);
 
     switch (valvula) {
-      case (null) {
-        return false;
-      };
-      case (?valvulaActual) {
-        let nuevaValvula: Valvula = {estado="abierta"};
-        listaValvulas.put(id, nuevaValvula);
-        Debug.print("Válvula abierta: " # id);
-        return true;
-      };
+        case (null) {
+            return false;
+        };
+        case (?valvulaActual) {
+            let nuevaValvula = {
+                estado = "cerrada";
+                horaCierre = horaCierre;
+            };
+            listaValvulas.put(id, nuevaValvula);
+            Debug.print("Válvula cerrada: " # id);
+            return true;
+        };
     };
-  };
+};
 
-  public shared (msg) func cerrarValvula(id: Text) : async Bool {
-    let valvula: ?Valvula = listaValvulas.get(id);
-
-    switch (valvula) {
-      case (null) {
-        return false;
-      };
-      case (?valvulaActual) {
-        let nuevaValvula: Valvula = {estado="cerrada"};
-        listaValvulas.put(id, nuevaValvula);
-        Debug.print("Válvula cerrada: " # id);
-        return true;
-      };
-    };
-  };
 
   public func eliminarValvula(id: Text) : async Bool {
     let valvula : ?Valvula = listaValvulas.get(id);
