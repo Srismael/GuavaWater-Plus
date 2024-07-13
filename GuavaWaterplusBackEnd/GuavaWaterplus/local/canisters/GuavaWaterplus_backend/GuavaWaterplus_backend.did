@@ -1,0 +1,12 @@
+type Valvula = record {estado: text;};
+service : {
+  abrirValvula: (text) -> (bool);
+  cerrarValvula: (text) -> (bool);
+  crearValvula: () -> ();
+  eliminarValvula: (text) -> (bool);
+  obtieneValvula: (text) -> (opt Valvula) query;
+  obtieneValvulas: () -> (vec record {
+                                text;
+                                Valvula;
+                              }) query;
+}
